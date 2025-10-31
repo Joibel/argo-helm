@@ -13,6 +13,8 @@ crds:
   install: true
   # -- Keep CRDs on chart uninstall
   keep: true
+  # -- Use full CRDs with complete OpenAPI schemas. When false, uses minified CRDs with x-kubernetes-preserve-unknown-fields
+  fullCRDs: false
   # -- Annotations to be added to all CRDs
   annotations: {}
 

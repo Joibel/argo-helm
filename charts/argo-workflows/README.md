@@ -8,11 +8,25 @@ If you want your deployment of this helm chart to most closely match the [argo C
 
 ### Custom resource definitions
 
+#### Full vs Minified CRDs
+
+By default, this chart installs the **minified CRDs** (which use `x-kubernetes-preserve-unknown-fields` to accept any fields). These are smaller in size but provide less validation.
+
+If you prefer to use the **full CRDs** with complete OpenAPI schemas (recommended for better validation and type safety), you can set:
+
+```bash
+--set crds.fullCRDs=true
+```
+
+Note: Full CRDs are approximately 7.4MB total but provide better validation and documentation.
+
+#### Installing CRDs Outside the Chart
+
 Some users would prefer to install the CRDs _outside_ of the chart. You can disable the CRD installation of this chart by using `--set crds.install=false` when installing the chart.
 
 Helm cannot upgrade custom resource definitions in the `<chart>/crds` folder [by design](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#some-caveats-and-explanations). Starting with 3.4.0 (chart version 0.19.0), the CRDs have been moved to `<chart>/templates` to address this design decision.
 
-If you are using Argo Workflows chart version prior to 3.4.0 (chart version 0.19.0) or have elected to manage the Argo Workflows CRDs outside of the chart, please use `kubectl` to upgrade CRDs manually from [templates/crds](templates/crds/) folder or via the manifests from the upstream project repo:
+If you are using Argo Workflows chart version prior to 3.4.0 (chart version 0.19.0) or have elected to manage the Argo Workflows CRDs outside of the chart, please use `kubectl` to upgrade CRDs manually from [templates/crds-full](templates/crds-full/) or [templates/crds-minified](templates/crds-minified/) folders, or via the manifests from the upstream project repo:
 
 ```bash
 kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=<appVersion>"
@@ -114,6 +128,7 @@ Fields to note:
 | apiVersionOverrides.monitoring | string | `""` | String to override apiVersion of monitoring CRDs (ServiceMonitor) rendered by this helm chart |
 | commonLabels | object | `{}` | Labels to set on all resources |
 | crds.annotations | object | `{}` | Annotations to be added to all CRDs |
+| crds.fullCRDs | bool | `false` | Use full CRDs with complete OpenAPI schemas. When false, uses minified CRDs with x-kubernetes-preserve-unknown-fields |
 | crds.install | bool | `true` | Install and upgrade CRDs |
 | crds.keep | bool | `true` | Keep CRDs on chart uninstall |
 | createAggregateRoles | bool | `true` | Create ClusterRoles that extend existing ClusterRoles to interact with Argo Workflows CRDs. |
