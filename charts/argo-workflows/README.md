@@ -18,7 +18,15 @@ If you prefer to use the **full CRDs** with complete OpenAPI schemas (recommende
 --set crds.fullCRDs=true
 ```
 
-Note: Full CRDs are approximately 7.4MB total but provide better validation and documentation.
+**Important:** Full CRDs are approximately 7.4MB total and will most likely need to be applied using Server Side Apply to avoid hitting size limits. When installing manually with kubectl, use:
+
+```bash
+kubectl apply --server-side --force-conflicts -f templates/crds-full/
+```
+
+Note: Helm 3 does not natively support Server Side Apply. If you encounter issues installing full CRDs via Helm (such as "metadata.annotations: Too long" errors), you should:
+1. Install the chart with `--set crds.install=false` to skip CRD installation
+2. Apply the CRDs manually using kubectl with `--server-side` as shown above
 
 #### Installing CRDs Outside the Chart
 
@@ -29,10 +37,14 @@ Helm cannot upgrade custom resource definitions in the `<chart>/crds` folder [by
 If you are using Argo Workflows chart version prior to 3.4.0 (chart version 0.19.0) or have elected to manage the Argo Workflows CRDs outside of the chart, please use `kubectl` to upgrade CRDs manually from [templates/crds-full](templates/crds-full/) or [templates/crds-minified](templates/crds-minified/) folders, or via the manifests from the upstream project repo:
 
 ```bash
-kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=<appVersion>"
+# For full CRDs (requires Server Side Apply due to size)
+kubectl apply --server-side --force-conflicts -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=<appVersion>"
 
 # Eg. version v3.3.9
-kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=v3.3.9"
+kubectl apply --server-side --force-conflicts -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/full?ref=v3.3.9"
+
+# For minified CRDs (standard apply works fine)
+kubectl apply -k "https://github.com/argoproj/argo-workflows/manifests/base/crds/minimal?ref=<appVersion>"
 ```
 
 ### ServiceAccount for Workflow Spec
@@ -128,7 +140,7 @@ Fields to note:
 | apiVersionOverrides.monitoring | string | `""` | String to override apiVersion of monitoring CRDs (ServiceMonitor) rendered by this helm chart |
 | commonLabels | object | `{}` | Labels to set on all resources |
 | crds.annotations | object | `{}` | Annotations to be added to all CRDs |
-| crds.fullCRDs | bool | `false` | Use full CRDs with complete OpenAPI schemas. When false, uses minified CRDs with x-kubernetes-preserve-unknown-fields |
+| crds.fullCRDs | bool | `false` | Use full CRDs with complete OpenAPI schemas (~7.4MB, may require Server Side Apply). When false, uses minified CRDs with x-kubernetes-preserve-unknown-fields |
 | crds.install | bool | `true` | Install and upgrade CRDs |
 | crds.keep | bool | `true` | Keep CRDs on chart uninstall |
 | createAggregateRoles | bool | `true` | Create ClusterRoles that extend existing ClusterRoles to interact with Argo Workflows CRDs. |
