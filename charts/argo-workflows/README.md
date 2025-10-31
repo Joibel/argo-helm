@@ -24,9 +24,44 @@ If you prefer to use the **full CRDs** with complete OpenAPI schemas (recommende
 kubectl apply --server-side --force-conflicts -f templates/crds-full/
 ```
 
-Note: Helm 3 does not natively support Server Side Apply. If you encounter issues installing full CRDs via Helm (such as "metadata.annotations: Too long" errors), you should:
+Note: Helm 3 does not natively support Server Side Apply. If you encounter issues installing full CRDs via Helm (such as "metadata.annotations: Too long" errors), you have two options:
+
+**Option 1: Manual kubectl apply**
 1. Install the chart with `--set crds.install=false` to skip CRD installation
 2. Apply the CRDs manually using kubectl with `--server-side` as shown above
+
+**Option 2: Use ArgoCD with Server Side Apply**
+
+ArgoCD supports Server Side Apply for Helm charts. To enable it, set the sync option in your Application manifest:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-workflows
+spec:
+  syncPolicy:
+    syncOptions:
+    - ServerSideApply=true
+  source:
+    chart: argo-workflows
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 0.45.27
+    helm:
+      values: |
+        crds:
+          fullCRDs: true
+```
+
+Or via ArgoCD CLI:
+```bash
+argocd app create argo-workflows \
+  --repo https://argoproj.github.io/argo-helm \
+  --helm-chart argo-workflows \
+  --revision 0.45.27 \
+  --helm-set crds.fullCRDs=true \
+  --sync-option ServerSideApply=true
+```
 
 #### Installing CRDs Outside the Chart
 
